@@ -7,7 +7,11 @@
 
 ### 引用计数机制：
 
-python里每一个东西都是对象，它们的核心就是一个结构体：`PyObject`
+python里每一个东西都是对象，它们的核心就是一个结构体：
+
+![1.PNG](https://i.loli.net/2019/08/15/Wj5H3ievkzsg2XL.png)
+
+`PyObject`
 
 ```python
 typedef struct_object {
