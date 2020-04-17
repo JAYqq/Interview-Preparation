@@ -8,6 +8,7 @@ class TreeNode:
         self.right = None
 
 class Solution:
+
     '''前序遍历递归写法'''
     def preorderTraversal1(self, root: TreeNode) -> List[int]:
         if not root:
