@@ -29,7 +29,6 @@ class Solution:
             if cur.left:
                 stack.append(cur.left)
         return ans
-    
     '''中序遍历递归写法'''
     def inorderTraversal1(self, root: TreeNode) -> List[int]:
         if not root:

@@ -89,7 +89,6 @@ if __name__ == "__main__":
 
 ```python
 def log(func):
-    @wraps(func)
     def code(*args,**kwargs): 
         """code run"""
         print("log :",func.__name__)
@@ -106,7 +105,7 @@ def run(a,b):
 if __name__=="__main__":
     run(2,3)
     print(run.__name__)
-    print(run.__doc__)
+    print(run.__doc__)  #函数里面的注释
 ```
 
 那么我们会发现，我们run函数的元信息就变成了：
@@ -124,7 +123,7 @@ code run
 import logging
 from functools import wraps
 def log(func):
-   # @wraps(func)
+    @wraps(func)
     def code(*args,**kwargs): 
         """code run"""
         print("log :",func.__name__)
