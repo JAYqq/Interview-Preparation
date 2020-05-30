@@ -5,7 +5,7 @@ def insertSort1():
     for i in range(1,leng):
         value=arr[i]
         for j in range(i-1,-1,-1):
-            if(arr[j]>value):
+            if arr[j]>value:
                 arr[j+1]=arr[j]
             else:
                 break
@@ -19,7 +19,7 @@ def insertSort2():
     for i in range(1,leng):
         value=arr[i]
         for j in range(i-1,-1,-1):
-            if(arr[j]<value):
+            if arr[j]<value:
                 arr[j+1]=arr[j]
             else:
                 break
