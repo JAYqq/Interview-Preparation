@@ -94,16 +94,25 @@
    join -t ':' -1 4 /etc/passwd -2 3 /etc/group | head -n 3  #以':'分割，第一个文件的第四个和第二                                                           #个文件的第三个join
    ```
 
-   
+10. 基础正则
 
-10. **排序**
+    ```shell
+    grep -n 'g*g' regular_express.txt      # *代表可以有任意多个前面的值
+    grep -n '[0-9][0-9]*' regular_express.txt    #表示数字序列
+    grep -n 'go\{2,5\}g' regular_express.txt     #go后面有2到5个o，需要用/转义括号
+    grep -n 'go\{2,\}g' regular_express.txt      #两个以上的o，就不需要限定右边的
+    ```
+
+    
+
+11. **排序**
 
     ```shell
     #whoopsie:x:112:117::/nonexistent:/bin/false  #/etc/passwd  格式
     cat /etc/passwd | sort -t ':' -k 3            #根据‘：’划分，然后根据第三个排序，也就是上面的112
     ```
 
-11. 分区命令
+12. 分区命令
 
     ```shell
     [dmtsai@study ~]$ split [-bl] file PREFIX
@@ -163,7 +172,7 @@ struct task_struct {
 
 3. 将自定义变量设定为环境变量
 
-   使用export命令（P428,10.2）
+   使用export命令（P428,10.2）1029914310
 
    使用unset 命令取消设定的变量
 
