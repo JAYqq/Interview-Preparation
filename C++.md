@@ -52,3 +52,23 @@
 
    https://zhuanlan.zhihu.com/p/34660259（RALL原理介绍）
 
+5. const 和 constexpr区别
+
+   - Constexpr  是编译期常量也就是编译器在编译的时候就可以计算这个值；const是运行时常量；
+
+   - ```c++
+     const int *p=a;  //指向一个整型常量的指针
+     constexpr int *p=a;   //指向一个整型的常量指针
+     ```
+
+   - constexpr修饰的函数，返回值不一定是编译期常量
+
+6. auto
+
+   ```c++
+   const int a=9;
+   auto num=a;   //num是一个整型，会忽略顶层const
+   auto &num=a;  //num是一个整型常量
+   ```
+
+   
