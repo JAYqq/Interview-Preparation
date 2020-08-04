@@ -2,7 +2,12 @@
 
    https://blog.csdn.net/zy47675676/article/details/91474604?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.nonecase
 
-   ![](https://img-blog.csdnimg.cn/20190611220525815.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3p5NDc2NzU2NzY=,size_16,color_FFFFFF,t_70)
+   对于各种类型的大小没有硬性的规定，但是有一些原则
+
+   - ANSI C规定 `char` 类型一定是8位。
+   - `long` 类型的长度和cpu字长一样。
+   - `int` 长度没有规定，但是不比 `short` 短不比 `long` 长，并且linux上支持的所有体系中 `int` 长度目前都是32位。
+   - `short` 和 `int` 类似，目前linux上长度都是16位。
 
 2. char (*p) [] 、char \*p[]、char (\*p)()的区别？
 
@@ -61,7 +66,28 @@
 6. const
 
    - c++中的const默认是内部连接，c中默认是外部链接，内部连接是不能只声明不赋值的。
+
    - c++中const对于基础类型不会开辟内存，而是放在符号表中，而如果以变量的形式定义const修饰的变量则会开辟内存。
+
+   - 顶层const
+
+     表示指针本身是一个常量，以下都是
+
+     ```cpp
+     int *const num;
+     const int num=42;
+     ```
+
+   - 底层const
+
+     表示指针指向的是一个常量
+
+     ```cpp
+     const int* num=&ci;
+     const int& num=ci;  //声明引用的const都是底层const
+     ```
+
+     
 
 7. const 和 constexpr区别
 
@@ -79,7 +105,19 @@
 
    - constexpr修饰的函数，返回值不一定是编译期常量
 
-8. auto
+8. const和define
+
+   1. const是运行时常量，二而define 是编译期的宏定义
+   2. define没有类型，所以没有类型检查，而const有类型检查在编译期间
+   3. define时宏展开，哪里使用哪里展开，不占内存；而const会分配内存。
+
+9. C++和C的const区别
+
+   c++中默认const是内部连接，也就是只对本文件有用，extern声明后才会变成外部链接；C中默认是外部链接。
+
+   所以c++默认链接不会创建内存给全局的字面值常量，而局部的非static const值会储存在内存空间的栈空间中
+
+10. auto
 
    ```c++
    const int a=9;
@@ -87,27 +125,95 @@
    auto &num=a;  //num是一个整型常量
    ```
 
-9. NULL和nullptr
+11. delcype
 
-   NULL在C++中是整数0，为什么NULL不能是空指针，因为C++中不能将void类型的指针隐形转换，所以NULL不可定义为void*
+    我们希望编译阶段，编译器通过表达式类型推断出变量的类型：
 
-10. 函数重载
+    ```cpp
+    decltype(fun()) del=x;   //这时候可以通过fun函数返回类型判断del的类型，x是fun的返回值
+    int a=42,&b=1;
+    decltype(b) del2; //错误，因为b是引用类型，必须初始化
+    decltype(b+1) del3;  //正确，虽然b是引用但是b+1是一个表达式，返回一个int类型给del3
+    ```
 
-   相同名字不同参数，但是不能是仅仅返回值不同，因为这样会产生二义性。
+12. Delcype和auto的区别
 
-   相同名字不同参数的函数在编译器编译的时候会产生两个不同的名字，来表示两个不同的方法。
+    1. 对于引用类型，auto会自动忽视顶层const
 
-   **类型安全连接**
+       ```cpp
+       const int num=3;
+       auto b = num;    //这里的b是一个非常量int
+       decltype(num) del;   //这里del就是一个常量类型
+       ```
 
-   道函数实际上应该是f（int），但编译器并不知道，因为它被告知—通过一个 
+    2. decltype类型加上括号就是一个引用
 
-   明确的声明—这个函数是f（char）。因此编译成功了，在C中，连接也能成功，但在C++中却不行。因为编译器会修饰这些名字，把它变成了诸如f_int之类的名字，而使用的 
+       ```cpp
+       int num=9;
+       decltype((num)) del=num;  //这样del就是一个int的引用类型，所以需要初始化
+       ```
 
-   函数则是f_char。当连接器试图找到f_char引用时，它只能找到f_int，所以它就会报告一条 
+13. NULL和nullptr
 
-   出错信息。这就是类型安全连接。
+    **NULL**
 
-11. static
+    c语言中的NULL
+
+    ```c
+    #define NULL ((void*)0)
+    ```
+
+    c++中的NULL
+
+    ```cpp
+    #define NULL 0
+    ```
+
+    NULL在C++中是整数0，为什么NULL不能是空指针，因**为C++中不能将void类型的指针隐形转换**，所以NULL不可定义为void*。
+
+    **为什么建议使用nullptr（空指针）而不是NULL？**
+
+    1. nullptr可以转换成任意类型的指针，而NULL不行
+
+       ```cpp
+       #include<iostream>
+       using namespace std;
+       void test(void *p)
+       {
+           cout<<"p is pointer "<<p<<endl;
+       }
+       void test(int num)
+       {
+           cout<<"num is int "<<num<<endl;
+       }
+       int main(void)
+       {
+       
+           test(NULL); //报错！
+         	test(nullptr); //ok！
+           return 0;
+       }
+       ```
+
+    2. 所有无用指针定义为nullptr，在析构函数中可以统一区分。
+
+14. 函数重载
+
+    相同名字不同参数，但是不能是仅仅返回值不同，因为这样会产生二义性。
+
+    相同名字不同参数的函数在编译器编译的时候会产生两个不同的名字，来表示两个不同的方法。
+
+    **类型安全连接**
+
+    道函数实际上应该是f（int），但编译器并不知道，因为它被告知—通过一个 
+
+    明确的声明—这个函数是f（char）。因此编译成功了，在C中，连接也能成功，但在C++中却不行。因为编译器会修饰这些名字，把它变成了诸如f_int之类的名字，而使用的 
+
+    函数则是f_char。当连接器试图找到f_char引用时，它只能找到f_int，所以它就会报告一条 
+
+    出错信息。这就是类型安全连接。
+
+15. static
 
     静态成员可以脱离类的作用域，独立于该类的任意对象
 
@@ -118,7 +224,7 @@
     - 静态成员函数中没有this指针，不能访问一般的数据成员只能访问静态成员
     - 一个类中的所有静态成员变量都在一个静态储存区内，所以对于一个类的所有对象而言，这个静态变量相当于一个全局变量
 
-12. 引用
+16. 引用
 
     - 不能有NULL引用
 
@@ -132,25 +238,15 @@
 
     - 
 
-13. union
+17. union
 
     https://zhuanlan.zhihu.com/p/131458347
 
     联合体，体内的变量共享内存大小，大小为体内最大的值大小。
 
-14. const和define
+    
 
-    1. const是运行时常量，二而define 是编译期的宏定义
-    2. define没有类型，所以没有类型检查，而const有类型检查在编译期间
-    3. define时宏展开，哪里使用哪里展开，不占内存；而const会分配内存。
-
-15. C++和C的const区别
-
-    c++中默认const是内部连接，也就是只对本文件有用，extern声明后才会变成外部链接；C中默认是外部链接。
-
-    所以c++默认链接不会创建内存给全局的字面值常量，而局部的非static const值会储存在内存空间的栈空间中
-
-16. 内联函数
+18. 内联函数
 
     https://zhuanlan.zhihu.com/p/101090186
 
@@ -160,7 +256,7 @@
     - 虚函数当非多态调用的时候也是可以使用内联的：https://www.zhihu.com/question/45894112/answer/100282374
     - 
 
-17. C++程序的处理过程
+19. C++程序的处理过程
 
     1. 预处理阶段
 
@@ -196,7 +292,7 @@
 
          在链接阶段，会将汇编生成的目标文件.o与引用到的库一起链接打包到可执行文件中**，linux下是.a文件，windows下是.lib文件
 
-18. 动态链接库和静态链接库制作
+20. 动态链接库和静态链接库制作
 
     - 概念
 
@@ -257,7 +353,7 @@
 
          ar命令
 
-19. static
+21. static
 
     - static变量处于程序的静态储存区，而不是存在于栈区间
 
@@ -284,7 +380,7 @@
 
       比如get_num函数如果不传递参数chararr，那么就会使用静态区变量
 
-20. 内部连接和外部链接
+22. 内部连接和外部链接
 
     https://zhuanlan.zhihu.com/p/150001991
 
@@ -298,9 +394,9 @@
 
       如果一个名称对编译单元来说不是局部的，而在链接的时候其他的编译单元可以访问它，也就是说它可以和别的编译单元交互。
 
-21. extern和static
+23. extern和static
 
-22. 宏定义#define
+24. 宏定义#define
 
     宏替换，被define替换的值在最后编译出来的代码中是不存在的，因为在预处理阶段就会被替换掉。比如#define success 1，最后编译的代码中不会有success，而是都被替换成1。
 
@@ -309,7 +405,7 @@
     1. 上面说明的这点，而const定义的值存在于最后的编译代码
     2. define无法指定变量的类型
 
-23. 封装、继承、多态
+25. 封装、继承、多态
 
     是面向对象的三大特性
 
@@ -330,7 +426,7 @@
 
        涉及到虚函数、纯虚函数、虚表
 
-24. 虚函数
+26. 虚函数
 
     继承过程中，主要有两种成员函数，一种是希望基类可以直接继承不需改变的函数，另一种的希望派生类重写并覆盖的函数。对于第二种，就是定义为**虚函数**。任何除了构造函数的非静态函数都可以被定义成抽象函数。
 
@@ -355,11 +451,11 @@
 
     - 在成员函数后加上final，在子类中就不能被重写
 
-25. 纯虚函数
+27. 纯虚函数
 
     为了方便使用多态的特性，我们需要在基类中定义一些虚函数，并且有虚函数的基类有时候不需要进行实例化，比如动物类可以有猫狗这样的派生类，但是动物本身的实例是没有意义的，所以这样的类可以被定义成抽象类，**而抽象类的定义就是至少含有一个纯虚函数的类**，纯虚函数声明如下： virtual void funtion1()=0
 
-26. 动态绑定和静态绑定
+28. 动态绑定和静态绑定
 
     这个可以看23虚函数那边，虚函数实现机制就是动态绑定的。
 
@@ -381,15 +477,15 @@
 
     上面这个现象：基类指针指向了派生类的对象，调用的虚函数会是派生类的虚函数叫做 **动态绑定**，如果不是虚函数，那么无论a怎么指向，都是调用基类的函数。**动态绑定的原理就是虚表的实现**
 
-27. 虚表
+29. 虚表
 
     在有虚函数的类编译期间，会在该类编译成二进制文件并加载到内存中的时候在堆区加一个虚表指针指向全局数据区中的虚表，所以如果在程序中使用sizeof打印有虚函数的类大小，发现会比不含虚函数的类大几个字节（根据计算机决定，32位是32/8=4字节，64位是8字节），虚表中会有多个多个虚表指针指向不同虚函数的内存地址。**每个类的实例都会有自己的虚表指针**，所以动态绑定的时候就是根据类指针去对应的虚表中寻找虚函数地址。
 
-28. 构造函数和析构函数可以是虚函数吗？
+30. 构造函数和析构函数可以是虚函数吗？
 
     构造函数不能是虚函数，因为虚函数是为了多态的实现，并且是动态绑定的，动态绑定的前提是有对象，但是有对象的前提是有构造函数实现，所以互相矛盾。
 
-29. 构造函数和析构函数中能否调用虚函数？
+31. 构造函数和析构函数中能否调用虚函数？
 
     能，但是不建议。为什么？因为如果构造函数中调用虚函数，那么继承的时候是先调用基类构造函数然后调用子类的，所以如果在构造函数中调用虚函数，那么基类调用的虚函数就是基类的虚函数，到了子类也是调用基类的虚函数，这就破坏了多态的原则。
 
@@ -397,15 +493,163 @@
 
     **所以总结来说，如果构造函数和析构函数中调用虚函数，就不会触发多态，这不是语法上的问题，而是标准的问题**
 
-30. C++的内存管理机制
+32. C++的内存管理机制
 
     https://zhuanlan.zhihu.com/p/51855842
 
     c++程序的内存布局由低地址往高地址分别是
 
-31. 类的拷贝、移动、赋值、销毁
+33. 类的拷贝、移动、赋值、销毁
 
-32. 析构函数不能为删除的函数
+    **拷贝**
+
+    拷贝构造函数
+
+    ```cpp
+    class A{
+      A(const A&); //必须是一个引用类型，并且最佳是const引用
+    }
+    ```
+
+    与合成构造函数不同，合成构造函数也就是编译器默认给我们的类加上的构造函数，前提是我们没有给出任何的构造函数声明。而合成构造函数编译期都会给出的。
+
+    拷贝构造函数在一下情况发生
+
+    - 将一个对象作为实参传递给一个非引用类型的形参
+    - 使用聚合类初始化成员的方式
+
+    **赋值**
+
+    https://zhuanlan.zhihu.com/p/94868622
+
+    ```cpp
+    #include<stdlib.h>
+    #include<stdio.h>
+    #include<string>
+    #include<iostream>
+    class MyString
+    {
+    private:
+        char *str;
+    public:
+        MyString():str(new char[1])
+        {
+            str[0]=0;
+        }
+        MyString(char* sr)
+        {
+            strcpy(str,sr);
+        }
+        ~MyString()
+        {
+            delete[] str;
+        }
+        MyString& operator=(const char *tmp)
+        {
+            delete[] str;
+            str=new char[strlen(tmp)+1];
+            strcpy(str,tmp);
+            return *this;
+        }
+        MyString& operator=(const MyString& s)
+        {
+            if(&s==this)
+            {
+                return *this;
+            }
+            delete[] str;
+            str=new char[strlen(s.str)+1];
+            strcpy(str,s.str);
+            return *this;
+        }
+        void get_str()
+        {
+            std::cout<<str<<std::endl;
+        }
+    };
+    int main()
+    {
+        // char *sr="Hello";
+        MyString mstr;
+        mstr.get_str();
+        mstr="Hello";
+        mstr.get_str();
+        MyString ystr;
+        ystr="World";
+        mstr=ystr;
+        mstr.get_str();
+        return 0;
+    }
+    ```
+
+    注意，这是赋值运算符的重载，仅仅是重载，这里把tmp2的值赋给tmp1，tmp2是还有别的用处的，所以与移动构造函数或者是移动赋值运算符不同的是，移动赋值运算符接收一个右值，右值是即将消亡的对象，可以看38里面的代码。
+
+    **移动**
+
+    移动构造函数是在一个临时对象会消亡但是它的资源本身还是有用的时候，只需要移动就可以了。
+
+34. 理一理复制构造函数、赋值运算符重载、移动构造函数、移动赋值运算符重载（**Important**）
+
+    ```cpp
+    class Person {
+    private:
+        int* data;
+    
+    public:
+        Person() : data(new int[1000000]){}
+        ~Person() { delete [] data; }
+    
+        // 拷贝构造函数，需要拷贝动态资源
+        Person(const Person& other) : data(new int[1000000]) {
+            std::copy(other.data,other.data+1000000,data);
+        }
+    
+        // 移动构造函数，无需拷贝动态资源
+        Person(Person&& other) : data(other.data) {
+            other.data=nullptr; // 源对象的指针应该置空，以免源对象析构时影响本对象
+        }
+      	
+      	//赋值运算符，但是这样会涉及到很大一块内存的拷贝问题，所以才需要一个
+      	Person& operator=(const Peronsn& p){
+          	delete data;
+          	data=new int[1000000];
+          	std::copy(p.data,p.data+1000000,data);
+          	return *this;
+        }
+      	
+      	//移动赋值运算符
+      	Person& operator=(Person&& p):data(p.data){
+          	data=nullptr;
+          	return *this;
+        }
+    };
+    
+    void func(Person p){
+        // do_something
+    } 
+    
+    int main(){
+        Person p;
+        func(p); // 调用Person的拷贝构造函数来创建实参
+        func(Person()); // 调用Person的移动构造函数来创建实参
+      	Person p2;
+      	p=p2; //调用赋值运算符重载(这里还是普通赋值运算符)
+      	p=std::move(p2); //调用移动赋值运算符
+        return 0;
+    }
+    ```
+
+    注意这里可以调用move函数强制调用移动赋值运算。
+
+35. 浅拷贝和深拷贝
+
+    https://zhuanlan.zhihu.com/p/94868622
+
+    浅拷贝就是两个指针指向同一块内存数据，深拷贝是不同对象有不同内存块存放相同的数据。
+
+    具体实现就是“=“的重载。
+
+36. 析构函数不能为删除的函数
 
     删除的函数定义是这样：
 
@@ -425,4 +669,214 @@
     S *s1 = new S();   //正确但是无法使用析构函数
     ```
 
+37. 异质链表
+
+    普通链表每个节点都是相同的类型，但是如果对于不同类型的数据想把他们串成链表，就需要抽离出他们的共同点，然后以他们的共同点去形成链表，但是每个节点里面都有一个指针去指向那个不同类型的部分。
+
+38. 左值和右值
+
+    简单的来说，当一个对象被用作右值的时候，用的是对象的值，而左值就是对象的地址。
+
+39. 右值引用和左值引用
+
+    左值引用就是我们最常遇见的：
+
+    ```cpp
+    void process_copy(const std::vector<int>& vec_) {
+        // do_something
+        std::vector<int> vec(vec_); //  不能修改左值，所以要拷贝vector
+        vec.push_back(42);
+    }
+    ```
+
+    右值引用在移动构造函数中很重要
+
+    右值引用有一个很重要的性质，只能绑定到一个即将销毁的对象上
+
+    ```cpp
+    int num=9;
+    int &&r=num; //错误，num是左值，不能将右值绑定到左值上
+    int &rr=num*7;  //错误，num*7是一个右值
+    const int &rrr=num*7;  //正确，可以将一个右值绑定到const引用上
+    int &&rb=num*7;  //正确，可以将右值绑定，对口
+    ```
+
+40. 右值引用是如何提高性能的？
+
+    https://zhuanlan.zhihu.com/p/54442127
+
+    在C++中，最常见的右值就是函数（包括普通函数和构造函数）的返回值。当一个函数调用完成后，这些没有变量名的返回值通常会被赋值给等号左边的一个左值变量，在没有右值引用的时代，这其实是一个极其消耗性能浪费资源的过程。首先，需要释放左值变量原有的内存资源，然后根据返回值的大小重新申请内存资源，接着才是将返回值的数据复制到左值变量新申请的内存中，最后还要释放掉返回值的内存资源。经过这样四个步骤，才能最终完成一个函数返回值的赋值操作。
+
+    而移动构造就是利用右值引用，因为右值引用的对象是马上需要销毁的对象，但是我们需要复制一个相同的对象，所以我们不需要重新创建空间、复制内容、销毁原来空间等操作，只需要转移一下管理者就可以了。
+
+    ```cpp
+    #include <iostream>
+    #include <cstring>
+    using namespace std;
+    class MemoryBlock
+    {
+    public:
+        MemoryBlock(const unsigned int nSize)
+        {
+            cout << "创建对象，申请内存资源" << nSize << "字节" << endl;
+            m_nSize = nSize;
+            m_pData = new char[m_nSize];
+        }
+        ~MemoryBlock()
+        {
+            cout << "销毁对象";
+            if (0 != m_nSize)
+            {
+                cout << "，释放内存资源" << m_nSize << "字节";
+                delete[] m_pData;
+                m_nSize = 0;
+            }
+            cout << endl;
+        }
+        MemoryBlock(MemoryBlock &&other) noexcept
+        {
+            cout << "移动资源" << other.m_nSize << "字节" << endl;
+            // 将目标对象的内存资源指针直接指向源对象的内存资源
+            // 表示将源对象内存资源的管理权移交给目标对象
+            m_pData = other.m_pData;
+            m_nSize = other.m_nSize; // 复制相应的内存块大小
+                                     // 将源对象的内存资源指针设置为nullptr
+            // 表示这块内存资源已经归目标对象所有
+            // 源对象不再拥有其管理权
+            other.m_pData = nullptr;
+            other.m_nSize = 0; // 内存块大小设置为0
+        }
+        // MemoryBlock &operator=(const MemoryBlock &other)
+        // {
+        //     if (this == &other)
+        //     {
+        //         return *this;
+        //     }
+        //     cout << "释放已有内存资源" << m_nSize << "字节" << endl;
+        //     delete[] m_pData;
+        //     m_nSize = other.GetSize();
+        //     cout << "重新申请内存资源" << m_nSize << "字节" << endl;
+        //     m_pData = new char[m_nSize];
+        //     cout << "复制数据" << m_nSize << "字节" << endl;
+        //     memcmp(m_pData, other.GetData(), m_nSize);
+        //     return *this;
+        // }
+        // 可以接收右值引用为参数的赋值操作符
+        MemoryBlock &operator=(MemoryBlock &&other)
+        {
+            // 第一步，释放已有内存资源
+            cout << "释放已有资源" << m_nSize << "字节" << endl;
+            delete[] m_pData;
+            // 第二步，移动资源，也就是移交内存资源的管理权
+            cout << "移动资源" << other.m_nSize << "字节" << endl;
+            m_pData = other.m_pData;
+            m_nSize = other.m_nSize;
+            other.m_pData = nullptr;
+            other.m_nSize = 0;
     
+            return *this;
+        }
+    
+    public:
+        unsigned int GetSize() const
+        {
+            return m_nSize;
+        }
+        char *GetData() const
+        {
+            return m_pData;
+        }
+    
+    private:
+        unsigned int m_nSize;
+        char *m_pData;
+    };
+    //创建一块内存空间，返回内存块对象
+    MemoryBlock CreateBlock(const unsigned int nSize)
+    {
+        MemoryBlock mem(nSize);
+        char *p = mem.GetData();
+        memset(mem.GetData(), 'A', mem.GetSize());
+        return mem;
+    }
+    int main()
+    {
+        MemoryBlock block(256);
+        block = CreateBlock(1024);
+        cout << "创建的对象大小是" << block.GetSize() << "字节" << endl;
+        return 0;
+    }
+    ```
+
+    这里因为CreateBlock是一个函数，函数返回值是一个右值对象，所以我们可以将赋值操作符参数转为右值引用，直接将对象管理权转交。
+
+    而接收右值引用的构造函数就是 **移动构造函数**
+
+41. 为什么移动构造函数后面需要加noexcept
+
+    noexcept表示我们的构造函数不会抛出异常，因为其实根本上是因为移动构造函数不分配任何资源，只是将资源的管理权转让给了目标，所以通常不会抛出异常，如果不加的话就会标准库知道我们这个移动构造函数可能会抛出异常，并且为了这个可能而需要做一些其他额外操作。
+
+    另外，如果移动构造函数发生了异常，也就是出现移动没有成功但是旧的对象却释放了（因为移动构造函数接收即将销毁的对象），那么就无法适从了；但是如果是拷贝构造函数，旧的对象一直存在不会影响。所以如果有noexcept修饰，就能显示说明不会有异常，再加上符合右值是一个临时对象的原则，就会调用移动构造函数
+    
+42. sizeof
+
+    不可用于函数
+
+    对于常见类型
+
+    - ANSI C规定 `char` 类型一定是8位。
+    - `long` 类型的长度和cpu字长一样。
+    - `int` 长度没有规定，但是不比 `short` 短不比 `long` 长，并且linux上支持的所有体系中 `int` 长度目前都是32位。
+    - `short` 和 `int` 类似，目前linux上长度都是16位。
+
+    对于指针
+
+    当操作数是指针时， `sizeof` 依赖于编译器。
+
+    例如Microsoft C/C++7.0中， `near` 类指针字节数为2， `far` 、 `huge` 类指针字节数为4。
+
+    **一般Unix的指针字节数为4**。
+
+    对于数组
+
+    当操作数具数组类型时，其结果是数组的总字节数。
+
+    如果操作数是函数中的数组形参或函数类型的形参， `sizeof` 给出其指针的大小。
+
+    对于结构体
+
+    需要内存对齐
+
+    ```cpp
+    struct MyStruct 
+    { 
+        double dda1; 
+        char dda; 
+        int type 
+    }；
+    //8+1+3+4=16，16是8倍数，ok！
+    struct MyStruct 
+    { 
+        char dda; 
+        double dda1; 
+        int type 
+    }；
+    //1+7+8+4=20,8最小整数倍是24，所以是24
+    /*
+    设置默认参数n，如果n小于对应值，那么取n否则取对应值；最后的最小整数倍也是取min(结构体中最大数据，n)
+    */
+    #pragma pack(push) //保存对齐状态 
+    #pragma pack(4)//设定为4字节对齐 
+    struct test 
+    { 
+        char m1; 
+        double m4; 
+        int m3; 
+    }; 
+    #pragma pack(pop)//恢复对齐状态
+    //1+3+8+4=16，16是n=4最小整数倍，ok
+    ```
+
+    sizeof(空类)=1
+
+    因为类是需要被实例化的，空的类也是可以实例化的，但是如果空类大小为0，那么就无法去表示一个实例在内存中的空间，如果一个指针指向这个实例，那么这个指针就找不见北了，所以一个字节就可以表示在内存中的地址了。
