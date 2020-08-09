@@ -1,8 +1,9 @@
 {
-    "python.pythonPath": "/usr/local/bin/python3",
     "files.associations": {
         "*.taml": "yaml",
         "iosfwd": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "vector": "cpp",
+        "stack": "cpp"
     }
 }
