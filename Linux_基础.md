@@ -264,6 +264,7 @@ struct task_struct {
     struct fs_struct      *fs;
     // 一个数组，包含该进程打开的文件指针
     struct files_struct   *files;
+    ....
 };
 ```
 
@@ -402,7 +403,18 @@ struct task_struct {
   | +    | 在后台执行                                 |
   | l    | 多线程                                     |
 
-  
+
+### IPC命令
+
+包括共享内存、信号量、消息队列的信息
+
+```shell
+ipcs -m  #共享内存
+ipcs -q  #消息队列
+ipcs -s  #信号量
+```
+
+
 
 
 ### PGREP

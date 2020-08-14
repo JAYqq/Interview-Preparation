@@ -445,9 +445,16 @@ https://zhuanlan.zhihu.com/p/150001991
 
 ## 虚函数
 
-继承过程中，主要有两种成员函数，一种是希望基类可以直接继承不需改变的函数，另一种的希望派生类重写并覆盖的函数。对于第二种，就是定义为**虚函数**。任何除了构造函数的非静态函数都可以被定义成抽象函数。
+继承过程中，主要有两种成员函数，一种是希望基类可以直接继承不需改变的函数，**另一种的要求派生类重写并覆盖的函数**。对于第二种，就是定义为**虚函数**。任何除了构造函数的非静态函数都可以被定义成抽象函数。
 
-**虚函数的调用是在运行阶段动态绑定的，而不是在编译阶段静态绑定的**
+### 虚继承
+
+虚拟继承是多重继承中特有的概念。虚拟基类是为解决多重继承而出现的。
+如:类D继承自类B1、B2，而类B1、B2都继 承自类A，因此在类D中两次出现类A中的变量和函数。为了节省内存空间，可以将B1、B2对A的继承定义为虚拟继承，而A就成了虚拟基类,虚拟继承在一般的应用中很少用到，所以也往往被忽视，这也主要是因为在C++中，多重继承是不推荐的，也并不常用，而一旦离开了多重继承，虚拟继承就完全失去了存在的必要因为这样只会降低效率和占用更多的空间。
+
+### 虚函数动态绑定
+
+虚函数的调用是在运行阶段动态绑定的，而不是在编译阶段静态绑定的
 
 ![v2-1854c774aa4a93c8e85e7458f74ecc02_1440w.jpg](https://i.loli.net/2020/07/26/3kx8ej5TmLYrRGX.jpg)
 
@@ -468,9 +475,13 @@ https://zhuanlan.zhihu.com/p/150001991
 
 - 在成员函数后加上final，在子类中就不能被重写
 
+- 派生类的override虚函数定义必须和父类完全一致。除了一个特例，如果父类中返回值是一个指针或引用，子类override时可以返回这个指针（或引用）的派生。例如，在上面的例子中，在Base中定义了 virtual Base* clone(); 在Derived中可以定义为 virtual Derived* clone()。可以看到，这种放松对于Clone模式是非常有用的。
+
 ### 纯虚函数
 
 为了方便使用多态的特性，我们需要在基类中定义一些虚函数，并且有虚函数的基类有时候不需要进行实例化，比如动物类可以有猫狗这样的派生类，但是动物本身的实例是没有意义的，所以这样的类可以被定义成抽象类，**而抽象类的定义就是至少含有一个纯虚函数的类**，纯虚函数声明如下： virtual void funtion1()=0
+
+**析构函数可以是纯虚的，但纯虚析构函数必须有定义体，因为析构函数的调用是在子类中隐含的。**
 
 ### 动态绑定和静态绑定
 
@@ -514,7 +525,149 @@ int main(){
 
 https://zhuanlan.zhihu.com/p/51855842
 
-c++程序的内存布局由低地址往高地址分别是
+### 内存管理器做了什么？
+
+在堆上分配内存，有些语言可能使用 new 这样的关键字，有些语言则是在对象的构造时隐式分配，不需要特殊关键字。不管哪种情况，程序通常需要牵涉到三个可能的内存管理器的操作：
+
+1. 让内存管理器分配一个某个大小的内存块
+2. 让内存管理器释放一个之前分配的内存块
+3. 让内存管理器进行垃圾收集操作，寻找不再使用的内存块并予以释放
+
+C++ 通常会做上面的操作 1 和 2。Java 会做上面的操作 1 和 3。而 Python 会做上面的操作 1、2、3。这是语言的特性和实现方式决定的。
+
+### 栈展开
+
+这也是C++内存管理比较关键的一点，就是C++编译器在程序发生异常的时候会自动调用当前栈内对象的析构函数
+
+```cpp
+#include <stdio.h>
+
+class Obj {
+public:
+  Obj() { puts("Obj()"); }
+  ~Obj() { puts("~Obj()"); }
+};
+
+void foo(int n)
+{
+  Obj obj;
+  if (n == 42)
+    throw "life, the universe and everything";
+}
+
+int main()
+{
+  try {
+    foo(41);
+    foo(42);
+  }
+  catch (const char* s) {
+    puts(s);
+  }
+}
+/*
+Obj()
+~Obj()
+Obj()
+~Obj()
+life, the universe and everything
+*/
+```
+
+### RALL
+
+```cpp
+#include<iostream>
+using namespace std;
+enum shape_type {
+    circle,
+    square
+};
+//形状基类
+class shape {
+public:
+    virtual unsigned get_area()=0;
+    virtual void show()=0;
+    virtual ~shape(){};
+};
+//圆形
+class Circle :public shape
+{
+private:
+    unsigned rad;
+public:
+    unsigned get_area (){return 3*rad*rad;}
+    void show(){cout<<"circle"<<endl;}
+    Circle(unsigned rad):rad(rad){}
+};
+//正方形
+class Square :public shape
+{
+private:
+    unsigned rad;
+public:
+    void show(){cout<<"square"<<endl;}
+    unsigned get_area(){return rad*rad;}
+    Square(unsigned rad):rad(rad){}
+    // ~square();
+};
+class Factory{
+public:
+    shape* create_shape(shape_type type) {
+        switch (type)
+        {
+        case circle:
+            return new Circle(3);
+            break;
+        case square:
+            return new Square(3);
+            break;
+        default:
+            break;
+        }
+    }
+};
+
+int main()
+{
+    Factory fac;
+    shape* s1=fac.create_shape(shape_type::circle);
+    s1->show();
+    cout<<s1->get_area()<<endl;
+    shape* s2=fac.create_shape(shape_type::square);
+    s2->show();
+    cout<<s2->get_area()<<endl;
+  	//本应该需要delete
+    return 0;
+}
+```
+
+上面的工厂类对不同shape进行了实例创建，但是，这也太容易忘记delete了（上面main中我就没有delete导致了 **内存泄漏**）
+
+根据上面的栈展开和析构函数，我们可以想到把这个实力放到一个对象中，这个对象就在main的栈中，就会主动调用析构函数了，像Python一切皆对象就是帮我们做掉了释放内存的操作。
+
+```cpp
+....
+....
+class shape_wrapper{
+public:
+    explicit shape_wrapper(shape* ptr=nullptr):ptr_(ptr){}
+    shape* get_ptr(){return ptr_;}
+    ~shape_wrapper(){delete ptr_;}
+private:
+    shape* ptr_;
+};
+int main()
+{
+    Factory fac;
+    shape_wrapper circle_wrapper(fac.create_shape(shape_type::circle));
+    cout<<circle_wrapper.get_ptr()->get_area()<<endl;
+    circle_wrapper.get_ptr()->show();
+    return 0;
+}
+```
+
+这样我们就把工厂类创建的实例放到了shape_wrapper中，让编译器帮我们主动调用析构函数，妈妈再也不用担心我们忘记释放内存啦。
 
 ## 类的拷贝、移动、赋值、销毁
 
@@ -979,3 +1132,41 @@ int main()
    - 显示变量 display+name
    - 查看当前调用堆栈 bt (backtrace)
    - 查看某一层调用代码 f (frame)
+
+## 段错误
+
+指访问的内存超出了系统所给这个程序的内存空间。
+
+## C++中重载、重写和隐藏
+
+https://zhuanlan.zhihu.com/p/97720017
+重点在于，重载是在同一作用域下定义，重写和隐藏是在不同作用域中
+
+### C语言中为什么不能支持函数重载？
+
+编译器在编译.c文件时，只会给函数进行简单的重命名；具体的方法是给函数名之前加上”_”;所以加入两个函数名相同的函数在编译之后的函数名也照样相同；调用者会因为不知道到底调用那个而出错；
+
+### C++中函数重载底层是如何处理的？
+
+在.cpp文件中，虽然两个函数的函数名一样，但是他们在符号表中生成的名称不一样。
+
+### 函数重载是一种静态多态
+
+多态：用同一个东西表示不同的形态；多态分为静态多态（编译时的多态）；动态多态（运行时的多态）；函数重载是一种静态多态；
+
+## 问问更健康
+
+### 用C++设计一个不能被继承的类
+
+将构造函数或析构函数设为为私有函数，所以该类是无法被继承的。
+
+### 如何定义一个只能在堆上定义对象的类?栈上呢
+
+只能在堆内存上实例化的类：将析构函数定义为private，在栈上不能自动调用析构函数，只能手动调用。也可以将构造函数定义为private，但这样需要手动写一个函数实现对象的构造。
+
+### 只能在栈内存上实例化的类
+
+将函数operator new和operator delete定义为private，这样使用new操作符创建对象时候，无法调用operator new，delete销毁对象也无法调用operator delete。
+
+
+
