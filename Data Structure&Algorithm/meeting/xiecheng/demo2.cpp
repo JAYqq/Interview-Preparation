@@ -3,20 +3,20 @@
 #include<algorithm>
 #include<vector>
 using namespace std;
-int n;
+int n,ix,m;
 vector<int>f;
 int find(int x){
     return x==f[x]?x:f[x]=find(f[x]);
 }
 int main(void){
-    cin>>n;
-    int num=n;
+    cin>>n>>ix>>m;
     f=vector<int>(n);
     for(int i=0;i<n;i++)f[i]=i;
     int ans=0,b=0;
-    while(num--){
+    while(m--){
         int one,two;
         scanf("%d,%d",&one,&two);
+        if(one==ix||two==ix)b++;
         int fx=find(one),fy=find(two);
         if(fx!=fy)f[fx]=fy;
     }
@@ -25,12 +25,4 @@ int main(void){
     }
     cout<<ans-b-1<<endl;
     return 0;
-
 }
-
-
-
-
-
-
-

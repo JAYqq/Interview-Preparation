@@ -669,6 +669,10 @@ int main()
 
 这样我们就把工厂类创建的实例放到了shape_wrapper中，让编译器帮我们主动调用析构函数，妈妈再也不用担心我们忘记释放内存啦。
 
+### 共享内存
+
+
+
 ## 类的拷贝、移动、赋值、销毁
 
 ### 拷贝
@@ -1160,6 +1164,36 @@ https://zhuanlan.zhihu.com/p/97720017
 
 将构造函数或析构函数设为为私有函数，所以该类是无法被继承的。
 
+```cpp
+#include<iostream>
+using namespace std;
+class A{
+private:
+    A(){cout<<"A"<<endl;}
+    ~A(){cout<<"~A"<<endl;}
+public:
+    static A* get_A(){
+        A *a=new A();
+        return a;
+    }
+    static void delete_A(A* a)
+    {
+        delete a;
+    }
+};
+class B:public A{
+public:
+    B(){cout<<"B"<<endl;}  //这是错误的，因为A的构造函数是私有无法被访问
+};
+int main()
+{
+    A* a=A::get_A();
+    B a; //错误
+    // delete a;  //错误，因为delete a需要访问A的析构函数，但是析构函数也是私有的
+    A::delete_A(a);  //只能通过这样去删除
+}
+```
+
 ### 如何定义一个只能在堆上定义对象的类?栈上呢
 
 只能在堆内存上实例化的类：将析构函数定义为private，在栈上不能自动调用析构函数，只能手动调用。也可以将构造函数定义为private，但这样需要手动写一个函数实现对象的构造。
@@ -1167,6 +1201,38 @@ https://zhuanlan.zhihu.com/p/97720017
 ### 只能在栈内存上实例化的类
 
 将函数operator new和operator delete定义为private，这样使用new操作符创建对象时候，无法调用operator new，delete销毁对象也无法调用operator delete。
+
+### i++和++i的区别
+
+两点区别：
+
+1. i++是返回i原值，然后自增，++i是先自增然后返回增加的后值
+2. **i++是右值，++i是左值**
+
+第一点比较明了，第二点在于i++和++i的实现
+
+i++
+
+```cpp
+int& int::operator++()
+{
+  *this+=1;
+  return *this;
+}
+```
+
+++i
+
+```cpp
+const int::operator++(int)
+{
+  int tempVal=*this;
+  *this+=1;
+  return tempval;
+}
+```
+
+所以很明显，++i返回的是一个临时变量，而临时变量是右值。
 
 
 

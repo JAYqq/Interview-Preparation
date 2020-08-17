@@ -135,6 +135,10 @@ listen(listenfd,LISTENQ);  //第三步，监听端口
 int nready=select(maxfd+1,&rset,nullptr,nullptr,NULL);  //第四步，阻塞等待事件发生
 ```
 
+![](https://img-blog.csdn.net/20131007164314234?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZ2Zlbmd0ZW5nZmVp/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+select在用户态创建新的socket后，需要将
+
 将一个进程加入到每个socket的等待列表中，如果有一个socket接收到了数据，那么就会使得这个进程从所有socket的等待列表中去掉，唤醒进程，这个进程知道了这么多socket中有一个接收到了数据，那么就遍历一遍socket列表。以上是调用select的时候没有任何socket有数据的情况，而其实调用select的时候，内核会遍历一遍socket列表，如果有一个以上的socket接收区有数据，那么直接返回，不会阻塞，这也是为什么select会返回大于1
 
 ##### 缺点
