@@ -310,8 +310,6 @@ struct task_struct {
 
 10. 用户登录shell后出现bash给用户使用的过程中发生了什么？
 
-    ![](/home/mason/Pictures/2020-05-27/Screenshot from 2020-05-27 16-58-29.png)
-
     首先系统会去读取/etc/profile文件，这个是每个shell都会读取的，这个文件里面也会调用/etc/profile.d/下的所有.sh文件，然后系统还会去读取~/.bash_profile文件，这是有三个顺序的（~/.bash_profile、~/.bash_login、~/.profile，按照顺序来，一个存在，后面就不会加载了），然后这三个里面一定还会去调用~/.bashrc文件
 
 11. source 命令主要的功能就是可以直接将用户自定义的环境变量加载到当前shell的环境，所以当多个人需要不同配置文件时，可以自定义配置文件然后去source

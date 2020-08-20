@@ -93,7 +93,32 @@ https://zhuanlan.zhihu.com/p/34660259（RALL原理介绍）
   const int& num=ci;  //声明引用的const都是底层const
   ```
 
-  
+- const修饰函数参数：
+
+  我们一般这样写：
+
+  ```cpp
+  void func(A a){}
+  ```
+
+  但是这样以 **值传递**的方式会触发拷贝构造函数，拷贝会损失效率，所以如果我们不需要修改这个变量，我们可以这样：
+
+  ```cpp
+  void func(const A &a)
+  ```
+
+  指针也是一样处理。
+
+- const 修饰函数
+
+  这个分为两种：
+
+  ```cpp
+  const int getValue();
+  int getValue2() const;
+  ```
+
+  第一种表示函数的返回值是const，第二种表示此函数的this指针是const，也就是此函数无法改变类成员变量。
 
 ### const 和 constexpr区别
 
