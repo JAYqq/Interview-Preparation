@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.taml": "yaml",
+        "algorithm": "cpp",
+        "queue": "cpp",
+        "__config": "cpp",
+        "memory": "cpp"
+    }
+}

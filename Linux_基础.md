@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 ## 常见命令
 
 1. linux下如何快速将文件每行倒序输出
@@ -131,6 +135,14 @@
 
     ```shell
     lsof -i:1080 | wc -l
+    ```
+
+14. 查看文件占用相关
+
+    ```shell
+    lsof filename 查看打开filename文件的所有进程
+    lsof -p procid 查看进程ID为procid的进程打开的文件列表
+    lsof -c command 查看进程名称为command的进程打开的文件列表
     ```
 
     
@@ -374,6 +386,8 @@ struct task_struct {
 - ps -aux | less          控制输出数量
 - ps -aux --sort -pcpu | less              按照cpu升序排序
 - ps -aux --sort -pcpu | head -n 10             输出前十条
+- ps -ef    (**这个命令能看到父进程ID，而aux不行**)
+- ps -ef -o ppid,pid（-o后面接自己想要输出的列）
 
 ### Ps 输出的字段
 

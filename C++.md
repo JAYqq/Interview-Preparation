@@ -15,6 +15,17 @@ https://blog.csdn.net/zy47675676/article/details/91474604?utm_medium=distribute.
 - `int` 长度没有规定，但是不比 `short` 短不比 `long` 长，并且linux上支持的所有体系中 `int` 长度目前都是32位。
 - `short` 和 `int` 类似，目前linux上长度都是16位。
 
+### 静态类型和动态类型
+
+简单来说，静态类型就是在编译期间就知道了变量的类型，比如以下：
+
+```cpp
+int age=18;
+auto ptr=age;
+```
+
+动态类型就是只有到了运行阶段才知道的类型，像基类指针指向了子类后调用虚函数就会指向子类的虚函数。
+
 ## char (*p) [] 、char \*p[]、char (\*p)()的区别？
 
 由于[]的优先级高于\*，所以char(*p)[]是指向一个数组的指针，char \*p[]指的是一个存放指针的数组。
@@ -723,7 +734,57 @@ int main()
 
 ### 共享内存
 
+## 智能指针
 
+大魔王终于来了。
+
+### Shared_ptr
+
+本质就是使用引用计数，和Python的引用计数相同，当一个对象的引用计数为0的时候，就会主动调用对象的析构函数来释放动态内存。
+
+shared_ptr中调用了new动态开辟内存空间。
+
+```cpp
+#include <memory>
+#include <iostream>
+class Test
+{
+public:
+    Test()
+    {
+        std::cout << "Test()" << std::endl;
+    }
+    ~Test()
+    {
+        std::cout << "~Test()" << std::endl;
+    }
+};
+int main()
+{
+    std::shared_ptr<Test> p1 = std::make_shared<Test>();
+    std::cout << "1 ref:" << p1.use_count() << std::endl;
+    {
+        std::shared_ptr<Test> p2 = p1;
+        std::cout << "2 ref:" << p1.use_count() << std::endl;
+    }
+    std::cout << "3 ref:" << p1.use_count() << std::endl;
+    return 0;
+}
+```
+
+结果如下：
+
+```text
+Test()
+1 ref:1
+2 ref:2
+3 ref:1
+~Test()
+```
+
+### weak_ptr
+
+它主要的是用来辅助shapred的，因为shared既然是引用计数
 
 ## 类的拷贝、移动、赋值、销毁
 
