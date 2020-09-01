@@ -168,7 +168,13 @@ reference back()
 string.substr(start,len)
 ```
 
+## Stack
 
+### 为什么需要分别top和pop
+
+原因在于，假设有一个`stack<vector<int>>`，拷贝vector时需要在堆上分配内存，如果系统负载严重或资源有限（比如vector有大量元素），vector的拷贝构造函数就会抛出[std::bad_alloc](https://en.cppreference.com/w/cpp/memory/new/bad_alloc)异常。如果pop可以返回栈顶元素值，返回一定是最后执行的语句，stack在返回前已经弹出了元素，但如果拷贝返回值时抛出异常，就会导致弹出的数据丢失（从栈上移除但拷贝失败）。因此[std::stack](https://en.cppreference.com/w/cpp/container/stack)的设计者将这个操作分解为top和pop两部分，但这样的分割却造成了race condition。
+
+这里的竞争比如多个线程同时处理这个stack，多个线程同时top了一个值并处理了两次，这是很危险的；另外如果一个线程先pop了，另一个线程准备pop的时候就会因为没有值而报错。
 
 
 
