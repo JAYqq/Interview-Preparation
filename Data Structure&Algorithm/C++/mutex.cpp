@@ -2,7 +2,9 @@
 #include<mutex>
 #include<iostream>
 #include<algorithm>
+// #include<stack>
 using namespace std;
+// stack<int> sf;
 std::list<int> v;
 std::mutex m;
 

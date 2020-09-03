@@ -35,22 +35,41 @@ import random
 #     quick_sort1(array1,0,len(array1)-1)
 #     print (array1)
 
+# def sub_sort(arr,low,high):
+#     temp=arr[low]
+#     while low<high:
+#         while low<high and arr[high]>=temp:
+#             high-=1
+#         while low<high and arr[high]<temp:
+#             arr[low]=arr[high]
+#             low+=1
+#             arr[high]=arr[low]
+#     arr[low]=temp
+#     return low
+# def quick_sort(arr,low,high):
+#     if low<high:
+#         cur=random.randint(low,high)
+#         arr[low],arr[cur]=arr[cur],arr[low]
+#         index = sub_sort(arr,low,high)
+#         quick_sort(arr,low,index)
+#         quick_sort(arr,index+1,high)
 def sub_sort(arr,low,high):
-    temp=arr[low]
+    base=arr[low]
     while low<high:
-        while low<high and arr[high]>=temp:
+        while low<high and arr[high]>=base:
             high-=1
-        while low<high and arr[high]<temp:
+        while low<high and arr[high]<base:
             arr[low]=arr[high]
             low+=1
             arr[high]=arr[low]
-    arr[low]=temp
+    arr[low]=base
     return low
+
 def quick_sort(arr,low,high):
     if low<high:
         cur=random.randint(low,high)
-        arr[low],arr[cur]=arr[cur],arr[low]
-        index = sub_sort(arr,low,high)
+        arr[cur],arr[low]=arr[low],arr[cur]
+        index=sub_sort(arr,low,high)
         quick_sort(arr,low,index)
         quick_sort(arr,index+1,high)
 
