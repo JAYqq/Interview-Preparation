@@ -34,9 +34,11 @@ public:
 };
 int main()
 {
-    std::shared_ptr<A> mA=std::make_shared<A>();
-    std::shared_ptr<B> mB=std::make_shared<B>();
-    mA->refer(mB);
-    mB->refer(mA);
+    // std::shared_ptr<A> mA=std::make_shared<A>();
+    // std::shared_ptr<B> mB=std::make_shared<B>();
+    // mA->refer(mB);
+    // mB->refer(mA);
+    std::unique_ptr<A> ua=std::make_unique<A>();
+    auto ub=std::move(ua);
     return 0;
 }
