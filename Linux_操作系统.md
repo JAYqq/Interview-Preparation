@@ -243,3 +243,9 @@ struct sigpending {
 都是一个文件的别名，软连接是与原文件分开独立的创建了inode，但是inode里面的数据块还是指向原文件的数据块，没有全部复制。
 
 硬连接是和原文件共享一个inode，所以硬连接无法跨文件系统储存。
+
+
+
+## 字节序
+
+https://www.ruanyifeng.com/blog/2016/11/byte-order.html
