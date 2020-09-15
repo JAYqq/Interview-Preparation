@@ -26,6 +26,91 @@ auto ptr=age;
 
 动态类型就是只有到了运行阶段才知道的类型，像基类指针指向了子类后调用虚函数就会指向子类的虚函数。
 
+## 四种类型转换
+
+### Const_cast
+
+能够去除const限定达到转换，但是不会修改原始const值
+
+```cpp
+const int contant=9;
+int* modifer=const_cast<int*>(&contant);
+*modifer=99;
+std::cout<<contant<<" "<<*modifer; //打印9和99
+```
+
+这里虽然进行了类型转换，但是显然没有修改掉原来的contant，这是很好的。
+
+**如果不想修改const变量的值，那为什么要去const呢？**
+
+原因是，我们可能调用了一个参数不是const 的函数，而我们传进去的实际参数确实是const的，但是我们知道这个函数是不会对参数做修改的。于是就需要使用const_cast 去除const限定，以便函数能够接受这个实际参数。
+
+```cpp
+    #include <iostream>
+    using namespace std;
+
+    void Printer (int* val,string seperator = "\n"){
+        cout << val<< seperator;
+    }
+    int main(void) {    
+
+        const int consatant = 20;
+        //Printer(consatant);//Error: invalid conversion from 'int' to 'int*'
+        Printer(const_cast<int *>(&consatant));
+
+        return 0;
+    }
+```
+
+### **reinterpret_cast**
+
+可以在任意类型指针之间进行转换，**但是无法去除const限定**
+
+### static_cast
+
+只允许存在关系的变量之间进行转换，**比如继承关系**，可以将指向父类的指针和指向子类的指针之间进行转换。
+
+```c++
+class Parents{
+public:
+    virtual ~Parents(){}
+    /*codes here*/
+};
+
+class Children : public Parents{
+    /*codes here*/
+};
+
+int main() {    
+
+    Children * daughter = new Children();
+    Parents * mother = static_cast<Parents*> (daughter); //right, cast with polymorphism
+
+    Parents * father = new Parents();
+    Children * son = static_cast<Children*> (father); //no error, but not safe
+}
+```
+
+**另外还有重要的作用就是基本类型之间的转化，这是其他的转换方式无法达到的**
+
+```cpp
+float floatValue = 21.7;
+int intValue = 7;
+
+cout << floatValue / 7 << "\t\t" << static_cast<int> (floatValue)/7 <<endl;
+cout << intValue/3 << "\t\t" << static_cast<double> (intValue)/3 << endl;
+
+//Output:
+//3.1     3
+//2       2.33333
+```
+
+### Dynamic_cast
+
+与static_cast一样，dynamic_cast的转换也需要目标类型和源对象有一定的关系：**继承关系**，更准确的说，**dynamic_cast是用来检查两者是否有继承关系**，因此该运算符实际上**只接受基于类对象的指针和引用的类转换**
+
+它和static_cast主要的区别在于dynamic和程序的运行状态有关系，或者说是在运行时多态性才会出现。比如用它们两个队两个没有关系的类指针之间转换，static在编译期间就无法成功，但是dynamic是在运行时出现转换过来的是一个空指针。
+
 ## char (*p) [] 、char \*p[]、char (\*p)()的区别？
 
 由于[]的优先级高于\*，所以char(*p)[]是指向一个数组的指针，char \*p[]指的是一个存放指针的数组。
@@ -71,6 +156,8 @@ int strToInt(char* str){
 - 指针可以有多级指针，但是引用只能一级
 - 指针可以的是空指针，而引用不能指向空
 - 指针的值在初始化完后可以重新指向，而引用不能重新指向新对象
+
+
 
 ## 野指针和悬空指针
 
@@ -238,6 +325,16 @@ explicit Temp(int a=0,int b=0):x(a),y(b){}
 
 这样就可以防止隐式类型转换了。
 
+## extern "C"
+
+https://zhuanlan.zhihu.com/p/114669161
+
+首先这有两层意思，一个是extern，也就是这个对象是可以被其他模块使用的，另外C表示以C的方式编译。
+
+由于C++是一门面向对象的语言，所以相对于C来说多了一些函数重载这样的情况，函数之所以能够重载，是因为在编译阶段，函数编译后放到符号表中的函数标识是根据函数的参数数量和类型来判别的，但是C中没有函数重载的概念，所以编译好放到符号表的标识是统一的。（具体看上面的文章）
+
+
+
 ## NULL和nullptr
 
 **NULL**
@@ -281,11 +378,19 @@ NULL在C++中是整数0，为什么NULL不能是空指针，因**为C++中不能
    
 2. 所有无用指针定义为nullptr，在析构函数中可以统一区分。
 
-## 函数重载
+## 函数重载和重写
+
+**函数的重载是发生在一个类或者同一区间的**
 
 相同名字不同参数，但是不能是仅仅返回值不同，因为这样会产生二义性。
 
 相同名字不同参数的函数在编译器编译的时候会产生两个不同的名字，来表示两个不同的方法。
+
+**重写是子类对基类的方法进行重新编写，参数类型、数量都不可变，概念上只针对与虚函数**
+
+### 不建议重写父函数的非虚函数
+
+违反了面向对象设计原则，父类的非虚函数表示不变功能函数，可以公用
 
 **类型安全连接**
 
@@ -434,6 +539,19 @@ https://time.geekbang.org/column/article/90855
 ### 执行阶段
 
 最后可执行文件执行的时候，我们是调用了exec这个系统调用，它会去调用load_elf_binary函数
+
+#### 函数调用的过程
+
+https://zhuanlan.zhihu.com/p/27339191
+
+1. 调用函数将调用参数往后压栈
+2. 将返回地址压栈，便于子函数返回后找到原地址
+3. 将父函数的rbp（栈起始贞压栈）
+4. 子函数有了自己的函数栈，所以需要设置rbp栈起始指针，设置成父函数的rsp指针（栈顶指针）
+
+#### 函数返回过程
+
+函数的返回值会先保存在rax寄存器中，然后把当前的栈rsp设置成之前保存的rbp-1，然后恢复之前保存的父函数的rbp就可以恢复到之前父函数的栈了，但后把rax保存的返回值压栈。
 
 ## 动态链接库和静态链接库制作
 
@@ -624,17 +742,38 @@ int main(){
 
 在有虚函数的类编译期间，会在该类编译成二进制文件并加载到内存中的时候在堆区加一个虚表指针指向全局数据区中的虚表，所以如果在程序中使用sizeof打印有虚函数的类大小，发现会比不含虚函数的类大几个字节（根据计算机决定，32位是32/8=4字节，64位是8字节），虚表中会有多个虚表指针指向不同虚函数的内存地址。**每个类的实例都会有自己的虚表指针**，所以动态绑定的时候就是根据类指针去对应的虚表中寻找虚函数地址。
 
-### 构造函数和析构函数可以是虚函数吗？
+### 构造函数可以是虚函数吗？
 
 构造函数不能是虚函数，因为虚函数是为了多态的实现，并且是动态绑定的，动态绑定的前提是有对象，但是有对象的前提是有构造函数实现，所以互相矛盾。
+
+### 析构函数一定要是虚函数吗？
+
+要求上来说是的，但是不是也不会报错。
+
+但是在有继承关系的类中，基类的析构函数一定要是虚函数，因为如果是这样：
+
+```cpp
+    class a{
+        int aa;
+    public:
+        virtual ~a(){};
+    };
+    class b : public a{
+        int bb;
+    };
+    a *pa = new b; // upcast
+    delete pa;
+```
+
+父类的指针指向子类对象的时候，如果基类的析构函数不是虚函数，那么delete只会运行父类的析构函数，不会调用子类的析构函数。
 
 ### 构造函数和析构函数中能否调用虚函数？
 
 能，但是不建议。为什么？因为如果构造函数中调用虚函数，那么继承的时候是先调用基类构造函数然后调用子类的，所以如果在构造函数中调用虚函数，那么基类调用的虚函数就是基类的虚函数，到了子类也是调用基类的虚函数，这就破坏了多态的原则。
 
-而析构函数，是先调用子类的析构函数，此时是调用的子类自己的虚函数，到了基类后，调用的是基类的虚函数，不是子类的。
+而析构函数，是先调用子类的析构函数，再调用父类的，所以如果父类的析构函数中有虚函数，那么只能是调用父类的了。
 
-**所以总结来说，如果构造函数和析构函数中调用虚函数，就不会触发多态，这不是语法上的问题，而是标准的问题**
+**所以总结来说，如果构造函数和析构函数中调用虚函数，就不会触发多态，这不是语法上的问题，而是标准的问题，破坏了面向对象的多态性**
 
 ## C++的内存管理机制
 
@@ -784,7 +923,60 @@ int main()
 
 这样我们就把工厂类创建的实例放到了shape_wrapper中，让编译器帮我们主动调用析构函数，妈妈再也不用担心我们忘记释放内存啦。
 
-### 共享内存
+### new和delete执行过程
+
+#### new
+
+1. 调用operator new，创建动态内存空间
+2. 然后如果是类类型的话吗，就调用placement new调用构造函数初始化这块内存空间。
+3. 然后返回对象指针
+
+operator new用于在堆上开辟空间，类似于malloc，它会接受size_t表示开辟的大小
+
+**Placement new**是operator new的一种重载，下面会讲优势。
+
+#### placement new
+
+单纯的operator只是实现了开辟内存的作用，但是并不会初始化这块内存。所以placement的作用之一就是调用构造函数初始化内存。
+
+并且它最重要的功能就是可以在另一块已经开辟的动态内存上创建对象，这是new直接操作无法实现的。
+
+```cpp
+#include<iostream>
+class Task{
+public:
+    Task(){std::cout<<"Task"<<std::endl;}
+};
+int main()
+{
+    char* buffer=new char[sizeof(Task)];
+    Task* task=new(buffer) Task;
+    return 0;
+}
+```
+
+这里就将一个Task实例对象创建在了buffer的堆空间上。
+
+#### delete
+
+1. 调用析构函数
+2. 调用free释放内存
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 智能指针
 
@@ -1053,305 +1245,306 @@ int main()
    S *s1 = new S();   //正确但是无法使用析构函数
    ```
 
-   ## 异质链表
 
-   普通链表每个节点都是相同的类型，但是如果对于不同类型的数据想把他们串成链表，就需要抽离出他们的共同点，然后以他们的共同点去形成链表，但是每个节点里面都有一个指针去指向那个不同类型的部分。
+## 异质链表
 
-   ## 左值和右值
+普通链表每个节点都是相同的类型，但是如果对于不同类型的数据想把他们串成链表，就需要抽离出他们的共同点，然后以他们的共同点去形成链表，但是每个节点里面都有一个指针去指向那个不同类型的部分。
 
-   简单的来说，当一个对象被用作右值的时候，用的是对象的值，而左值就是对象的地址。
+## 左值和右值
 
-   ### 右值引用和左值引用
+简单的来说，当一个对象被用作右值的时候，用的是对象的值，而左值就是对象的地址。
 
-   左值引用就是我们最常遇见的：
+### 右值引用和左值引用
 
-   ```cpp
-   void process_copy(const std::vector<int>& vec_) {
-       // do_something
-       std::vector<int> vec(vec_); //  不能修改左值，所以要拷贝vector
-       vec.push_back(42);
-   }
-   ```
+左值引用就是我们最常遇见的：
 
-   右值引用在移动构造函数中很重要
-
-   右值引用有一个很重要的性质，只能绑定到一个即将销毁的对象上
-
-   ```cpp
-   int num=9;
-   int &&r=num; //错误，num是左值，不能将右值绑定到左值上
-   int &rr=num*7;  //错误，num*7是一个右值
-   const int &rrr=num*7;  //正确，可以将一个右值绑定到const引用上
-   int &&rb=num*7;  //正确，可以将右值绑定，对口
-   ```
-
-   ### 右值引用是如何提高性能的？
-
-   https://zhuanlan.zhihu.com/p/54442127
-
-   在C++中，最常见的右值就是函数（包括普通函数和构造函数）的返回值。当一个函数调用完成后，这些没有变量名的返回值通常会被赋值给等号左边的一个左值变量，在没有右值引用的时代，这其实是一个极其消耗性能浪费资源的过程。首先，需要释放左值变量原有的内存资源，然后根据返回值的大小重新申请内存资源，接着才是将返回值的数据复制到左值变量新申请的内存中，最后还要释放掉返回值的内存资源。经过这样四个步骤，才能最终完成一个函数返回值的赋值操作。
-
-   而移动构造就是利用右值引用，因为右值引用的对象是马上需要销毁的对象，但是我们需要复制一个相同的对象，所以我们不需要重新创建空间、复制内容、销毁原来空间等操作，只需要转移一下管理者就可以了。
-
-   ```cpp
-   #include <iostream>
-   #include <cstring>
-   using namespace std;
-   class MemoryBlock
-   {
-   public:
-       MemoryBlock(const unsigned int nSize)
-       {
-           cout << "创建对象，申请内存资源" << nSize << "字节" << endl;
-           m_nSize = nSize;
-           m_pData = new char[m_nSize];
-       }
-       ~MemoryBlock()
-       {
-           cout << "销毁对象";
-           if (0 != m_nSize)
-           {
-               cout << "，释放内存资源" << m_nSize << "字节";
-               delete[] m_pData;
-               m_nSize = 0;
-           }
-           cout << endl;
-       }
-       MemoryBlock(MemoryBlock &&other) noexcept
-       {
-           cout << "移动资源" << other.m_nSize << "字节" << endl;
-           // 将目标对象的内存资源指针直接指向源对象的内存资源
-           // 表示将源对象内存资源的管理权移交给目标对象
-           m_pData = other.m_pData;
-           m_nSize = other.m_nSize; // 复制相应的内存块大小
-                                    // 将源对象的内存资源指针设置为nullptr
-           // 表示这块内存资源已经归目标对象所有
-           // 源对象不再拥有其管理权
-           other.m_pData = nullptr;
-           other.m_nSize = 0; // 内存块大小设置为0
-       }
-       // MemoryBlock &operator=(const MemoryBlock &other)
-       // {
-       //     if (this == &other)
-       //     {
-       //         return *this;
-       //     }
-       //     cout << "释放已有内存资源" << m_nSize << "字节" << endl;
-       //     delete[] m_pData;
-       //     m_nSize = other.GetSize();
-       //     cout << "重新申请内存资源" << m_nSize << "字节" << endl;
-       //     m_pData = new char[m_nSize];
-       //     cout << "复制数据" << m_nSize << "字节" << endl;
-       //     memcmp(m_pData, other.GetData(), m_nSize);
-       //     return *this;
-       // }
-       // 可以接收右值引用为参数的赋值操作符
-       MemoryBlock &operator=(MemoryBlock &&other)
-       {
-           // 第一步，释放已有内存资源
-           cout << "释放已有资源" << m_nSize << "字节" << endl;
-           delete[] m_pData;
-           // 第二步，移动资源，也就是移交内存资源的管理权
-           cout << "移动资源" << other.m_nSize << "字节" << endl;
-           m_pData = other.m_pData;
-           m_nSize = other.m_nSize;
-           other.m_pData = nullptr;
-           other.m_nSize = 0;
-   
-           return *this;
-       }
-   
-   public:
-       unsigned int GetSize() const
-       {
-           return m_nSize;
-       }
-       char *GetData() const
-       {
-           return m_pData;
-       }
-   
-   private:
-       unsigned int m_nSize;
-       char *m_pData;
-   };
-   //创建一块内存空间，返回内存块对象
-   MemoryBlock CreateBlock(const unsigned int nSize)
-   {
-       MemoryBlock mem(nSize);
-       char *p = mem.GetData();
-       memset(mem.GetData(), 'A', mem.GetSize());
-       return mem;
-   }
-   int main()
-   {
-       MemoryBlock block(256);
-       block = CreateBlock(1024);
-       cout << "创建的对象大小是" << block.GetSize() << "字节" << endl;
-       return 0;
-   }
-   ```
-
-   这里因为CreateBlock是一个函数，函数返回值是一个右值对象，所以我们可以将赋值操作符参数转为右值引用，直接将对象管理权转交。
-
-   而接收右值引用的构造函数就是 **移动构造函数**
-
-   ## 为什么移动构造函数后面需要加noexcept
-
-   noexcept表示我们的构造函数不会抛出异常，因为其实根本上是因为移动构造函数不分配任何资源，只是将资源的管理权转让给了目标，所以通常不会抛出异常，如果不加的话就会标准库知道我们这个移动构造函数可能会抛出异常，并且为了这个可能而需要做一些其他额外操作。
-
-   另外，如果移动构造函数发生了异常，也就是出现移动没有成功但是旧的对象却释放了（因为移动构造函数接收即将销毁的对象），那么就无法适从了；但是如果是拷贝构造函数，旧的对象一直存在不会影响。所以如果有noexcept修饰，就能显示说明不会有异常，再加上符合右值是一个临时对象的原则，就会调用移动构造函数
-
-   ## sizeof
-
-   不可用于函数
-
-   ### 对于常见类型
-
-   - ANSI C规定 `char` 类型一定是8位。
-   - `long` 类型的长度和cpu字长一样。
-   - `int` 长度没有规定，但是不比 `short` 短不比 `long` 长，并且linux上支持的所有体系中 `int` 长度目前都是32位。
-   - `short` 和 `int` 类似，目前linux上长度都是16位。
-
-   ### 对于指针
-
-   当操作数是指针时， `sizeof` 依赖于编译器。
-
-   例如Microsoft C/C++7.0中， `near` 类指针字节数为2， `far` 、 `huge` 类指针字节数为4。
-
-   **一般Unix的指针字节数为4**。
-
-   ### 对于数组
-
-   当操作数具数组类型时，其结果是数组的总字节数。
-
-   如果操作数是函数中的数组形参或函数类型的形参， `sizeof` 给出其指针的大小。
-
-   ### 对于结构体
-
-   需要内存对齐
-
-   ```cpp
-   struct MyStruct 
-   { 
-       double dda1; 
-       char dda; 
-       int type 
-   }；
-   //8+1+3+4=16，16是8倍数，ok！
-   struct MyStruct 
-   { 
-       char dda; 
-       double dda1; 
-       int type 
-   }；
-   //1+7+8+4=20,8最小整数倍是24，所以是24
-   /*
-   设置默认参数n，如果n小于对应值，那么取n否则取对应值；最后的最小整数倍也是取min(结构体中最大数据，n)
-   */
-   #pragma pack(push) //保存对齐状态 
-   #pragma pack(4)//设定为4字节对齐 
-   struct test 
-   { 
-       char m1; 
-       double m4; 
-       int m3; 
-   }; 
-   #pragma pack(pop)//恢复对齐状态
-   //1+3+8+4=16，16是n=4最小整数倍，ok
-   ```
-
-   sizeof(空类)=1
-
-   因为类是需要被实例化的，空的类也是可以实例化的，但是如果空类大小为0，那么就无法去表示一个实例在内存中的空间，如果一个指针指向这个实例，那么这个指针就找不见北了，所以一个字节就可以表示在内存中的地址了。
-
-   #### 为什么需要内存对齐
-
-   https://www.pengrl.com/p/20020/（必看）
-
-   主要还是因为CPU是按字长单位访问的，所以为了防止一个变量跨多个字长，无谓增加读取内存次数，才需要内存对齐。
-   
-   ## 函数指针
-   
-   https://zhuanlan.zhihu.com/p/37306637
-   
-   ```cpp
-   #include<iostream>
-   using namespace std;
-   int foo()
-   {
-       cout<<"foo"<<endl;
-   }
-   int boo()
-   {
-       cout<<"boo"<<endl;
-   }
-   int goo(int num)
-   {
-       cout<<num<<endl;
-   }
-   int main()
-   {
-       int (*func_ptr)()=foo;
-       func_ptr();
-       func_ptr=boo;
-    func_ptr();
-     	int (*func_ptr2)(int)=goo; //需要有一个参数
-    func_ptr2(3);
-       cout<<reinterpret_cast<void*>(foo)<<endl;
-   }
-   ```
-   
-   ### 将函数用于参数传递
-   
-   ```cpp
-   #include<iostream>
-   using namespace std;
-   int add(int a,int b)
-   {
-       // cout<<a+b<<endl;
-       return a+b;
-   }
-   int sub(int a,int b)
-   {
-       // cout<<a-b<<endl;
-       return a-b;
-   }
-   void handle(int num1,int num2,int(*func_ptr)(int a,int b))
-   {
-       cout<<func_ptr(num1,num2);
-   }
-   int main()
-{
-       handle(3,2,add);
-    handle(3,2,sub);
-       return 0;
+```cpp
+void process_copy(const std::vector<int>& vec_) {
+    // do_something
+    std::vector<int> vec(vec_); //  不能修改左值，所以要拷贝vector
+    vec.push_back(42);
 }
-   ```
-   
-   ## GDB调试
+```
 
-   首先在编译的时候需要加上-g参数：
+右值引用在移动构造函数中很重要
 
-   ```shell
+右值引用有一个很重要的性质，只能绑定到一个即将销毁的对象上
+
+```cpp
+int num=9;
+int &&r=num; //错误，num是左值，不能将右值绑定到左值上
+int &rr=num*7;  //错误，num*7是一个右值
+const int &rrr=num*7;  //正确，可以将一个右值绑定到const引用上
+int &&rb=num*7;  //正确，可以将右值绑定，对口
+```
+
+### 右值引用是如何提高性能的？
+
+https://zhuanlan.zhihu.com/p/54442127
+
+在C++中，最常见的右值就是函数（包括普通函数和构造函数）的返回值。当一个函数调用完成后，这些没有变量名的返回值通常会被赋值给等号左边的一个左值变量，在没有右值引用的时代，这其实是一个极其消耗性能浪费资源的过程。首先，需要释放左值变量原有的内存资源，然后根据返回值的大小重新申请内存资源，接着才是将返回值的数据复制到左值变量新申请的内存中，最后还要释放掉返回值的内存资源。经过这样四个步骤，才能最终完成一个函数返回值的赋值操作。
+
+而移动构造就是利用右值引用，因为右值引用的对象是马上需要销毁的对象，但是我们需要复制一个相同的对象，所以我们不需要重新创建空间、复制内容、销毁原来空间等操作，只需要转移一下管理者就可以了。
+
+```cpp
+#include <iostream>
+#include <cstring>
+using namespace std;
+class MemoryBlock
+{
+public:
+    MemoryBlock(const unsigned int nSize)
+    {
+        cout << "创建对象，申请内存资源" << nSize << "字节" << endl;
+        m_nSize = nSize;
+        m_pData = new char[m_nSize];
+    }
+    ~MemoryBlock()
+    {
+        cout << "销毁对象";
+        if (0 != m_nSize)
+        {
+            cout << "，释放内存资源" << m_nSize << "字节";
+            delete[] m_pData;
+            m_nSize = 0;
+        }
+        cout << endl;
+    }
+    MemoryBlock(MemoryBlock &&other) noexcept
+    {
+        cout << "移动资源" << other.m_nSize << "字节" << endl;
+        // 将目标对象的内存资源指针直接指向源对象的内存资源
+        // 表示将源对象内存资源的管理权移交给目标对象
+        m_pData = other.m_pData;
+        m_nSize = other.m_nSize; // 复制相应的内存块大小
+                                 // 将源对象的内存资源指针设置为nullptr
+        // 表示这块内存资源已经归目标对象所有
+        // 源对象不再拥有其管理权
+        other.m_pData = nullptr;
+        other.m_nSize = 0; // 内存块大小设置为0
+    }
+    // MemoryBlock &operator=(const MemoryBlock &other)
+    // {
+    //     if (this == &other)
+    //     {
+    //         return *this;
+    //     }
+    //     cout << "释放已有内存资源" << m_nSize << "字节" << endl;
+    //     delete[] m_pData;
+    //     m_nSize = other.GetSize();
+    //     cout << "重新申请内存资源" << m_nSize << "字节" << endl;
+    //     m_pData = new char[m_nSize];
+    //     cout << "复制数据" << m_nSize << "字节" << endl;
+    //     memcmp(m_pData, other.GetData(), m_nSize);
+    //     return *this;
+    // }
+    // 可以接收右值引用为参数的赋值操作符
+    MemoryBlock &operator=(MemoryBlock &&other)
+    {
+        // 第一步，释放已有内存资源
+        cout << "释放已有资源" << m_nSize << "字节" << endl;
+        delete[] m_pData;
+        // 第二步，移动资源，也就是移交内存资源的管理权
+        cout << "移动资源" << other.m_nSize << "字节" << endl;
+        m_pData = other.m_pData;
+        m_nSize = other.m_nSize;
+        other.m_pData = nullptr;
+        other.m_nSize = 0;
+
+        return *this;
+    }
+
+public:
+    unsigned int GetSize() const
+    {
+        return m_nSize;
+    }
+    char *GetData() const
+    {
+        return m_pData;
+    }
+
+private:
+    unsigned int m_nSize;
+    char *m_pData;
+};
+//创建一块内存空间，返回内存块对象
+MemoryBlock CreateBlock(const unsigned int nSize)
+{
+    MemoryBlock mem(nSize);
+    char *p = mem.GetData();
+    memset(mem.GetData(), 'A', mem.GetSize());
+    return mem;
+}
+int main()
+{
+    MemoryBlock block(256);
+    block = CreateBlock(1024);
+    cout << "创建的对象大小是" << block.GetSize() << "字节" << endl;
+    return 0;
+}
+```
+
+这里因为CreateBlock是一个函数，函数返回值是一个右值对象，所以我们可以将赋值操作符参数转为右值引用，直接将对象管理权转交。
+
+而接收右值引用的构造函数就是 **移动构造函数**
+
+## 为什么移动构造函数后面需要加noexcept
+
+noexcept表示我们的构造函数不会抛出异常，因为其实根本上是因为移动构造函数不分配任何资源，只是将资源的管理权转让给了目标，所以通常不会抛出异常，如果不加的话就会标准库知道我们这个移动构造函数可能会抛出异常，并且为了这个可能而需要做一些其他额外操作。
+
+另外，如果移动构造函数发生了异常，也就是出现移动没有成功但是旧的对象却释放了（因为移动构造函数接收即将销毁的对象），那么就无法适从了；但是如果是拷贝构造函数，旧的对象一直存在不会影响。所以如果有noexcept修饰，就能显示说明不会有异常，再加上符合右值是一个临时对象的原则，就会调用移动构造函数
+
+## sizeof
+
+不可用于函数
+
+### 对于常见类型
+
+- ANSI C规定 `char` 类型一定是8位。
+- `long` 类型的长度和cpu字长一样。
+- `int` 长度没有规定，但是不比 `short` 短不比 `long` 长，并且linux上支持的所有体系中 `int` 长度目前都是32位。
+- `short` 和 `int` 类似，目前linux上长度都是16位。
+
+### 对于指针
+
+当操作数是指针时， `sizeof` 依赖于编译器。
+
+例如Microsoft C/C++7.0中， `near` 类指针字节数为2， `far` 、 `huge` 类指针字节数为4。
+
+**一般Unix的指针字节数为4**。
+
+### 对于数组
+
+当操作数具数组类型时，其结果是数组的总字节数。
+
+如果操作数是函数中的数组形参或函数类型的形参， `sizeof` 给出其指针的大小。
+
+### 对于结构体
+
+需要内存对齐
+
+```cpp
+struct MyStruct 
+{ 
+    double dda1; 
+    char dda; 
+    int type 
+}；
+//8+1+3+4=16，16是8倍数，ok！
+struct MyStruct 
+{ 
+    char dda; 
+    double dda1; 
+    int type 
+}；
+//1+7+8+4=20,8最小整数倍是24，所以是24
+/*
+设置默认参数n，如果n小于对应值，那么取n否则取对应值；最后的最小整数倍也是取min(结构体中最大数据，n)
+*/
+#pragma pack(push) //保存对齐状态 
+#pragma pack(4)//设定为4字节对齐 
+struct test 
+{ 
+    char m1; 
+    double m4; 
+    int m3; 
+}; 
+#pragma pack(pop)//恢复对齐状态
+//1+3+8+4=16，16是n=4最小整数倍，ok
+```
+
+sizeof(空类)=1
+
+因为类是需要被实例化的，空的类也是可以实例化的，但是如果空类大小为0，那么就无法去表示一个实例在内存中的空间，如果一个指针指向这个实例，那么这个指针就找不见北了，所以一个字节就可以表示在内存中的地址了。
+
+#### 为什么需要内存对齐
+
+https://www.pengrl.com/p/20020/（必看）
+
+主要还是因为CPU是按字长单位访问的，所以为了防止一个变量跨多个字长，无谓增加读取内存次数，才需要内存对齐。
+
+## 函数指针
+
+https://zhuanlan.zhihu.com/p/37306637
+
+```cpp
+#include<iostream>
+using namespace std;
+int foo()
+{
+    cout<<"foo"<<endl;
+}
+int boo()
+{
+    cout<<"boo"<<endl;
+}
+int goo(int num)
+{
+    cout<<num<<endl;
+}
+int main()
+{
+    int (*func_ptr)()=foo;
+    func_ptr();
+    func_ptr=boo;
+ func_ptr();
+  	int (*func_ptr2)(int)=goo; //需要有一个参数
+ func_ptr2(3);
+    cout<<reinterpret_cast<void*>(foo)<<endl;
+}
+```
+
+### 将函数用于参数传递
+
+```cpp
+#include<iostream>
+using namespace std;
+int add(int a,int b)
+{
+    // cout<<a+b<<endl;
+    return a+b;
+}
+int sub(int a,int b)
+{
+    // cout<<a-b<<endl;
+    return a-b;
+}
+void handle(int num1,int num2,int(*func_ptr)(int a,int b))
+{
+    cout<<func_ptr(num1,num2);
+}
+int main()
+{
+    handle(3,2,add);
+ handle(3,2,sub);
+    return 0;
+}
+```
+
+## GDB调试
+
+首先在编译的时候需要加上-g参数：
+
+```shell
 g++11 -g demo.cpp -o demo
-   ```
-   
-   表示编译的时候产生调试信息
-   
-   ### 基本调试命令
-   
-   - **显示图形化代码 Ctrl+x+a**，或者进入调试界面的时候使用gdb demo -tui这样的形式
-   - 启动程序 r (run)
-   - 断点 b (breakpoint)
-   - 清除/禁用/启用断点 delete/disable/enable
-   - 单步 s (step 碰到函数会进入)
-   - 单行 n (next 碰到函数不会进行, 而是整条执行)
-   - 执行到下一个断点 c (continue)
-   - 查看变量 p (print)+name
-   - 显示变量 display+name
-   - 查看当前调用堆栈 bt (backtrace)
-   - 查看某一层调用代码 f (frame)
+```
+
+表示编译的时候产生调试信息
+
+### 基本调试命令
+
+- **显示图形化代码 Ctrl+x+a**，或者进入调试界面的时候使用gdb demo -tui这样的形式
+- 启动程序 r (run)
+- 断点 b (breakpoint)
+- 清除/禁用/启用断点 delete/disable/enable
+- 单步 s (step 碰到函数会进入)
+- 单行 n (next 碰到函数不会进行, 而是整条执行)
+- 执行到下一个断点 c (continue)
+- 查看变量 p (print)+name
+- 显示变量 display+name
+- 查看当前调用堆栈 bt (backtrace)
+- 查看某一层调用代码 f (frame)
 
 ## 段错误
 
@@ -1450,5 +1643,6 @@ const int::operator++(int)
 
 所以很明显，++i返回的是一个临时变量，而临时变量是右值。
 
+### 为什么空类的大小为1
 
-
+主要因为空类同样可以被实例化，实例化也就是初始化内存空间，所以需要独一无二的地址，所以编译器分配了一个字节给空类。
